@@ -1,0 +1,12 @@
+<resources>
+    <style name="Theme.Home" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorAccent">@color/rose</item>
+    </style>
+    <color name="bg">#F6F2EE</color>
+    <color name="rose">#C9A3A8</color>
+    <color name="sage">#9DAE98</color>
+</resources>
