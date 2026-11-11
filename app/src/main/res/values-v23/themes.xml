@@ -1,0 +1,10 @@
+<resources>
+    <!-- Android 6+: light bars with dark icons, same look as before. -->
+    <style name="Theme.Home" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:colorAccent">@color/rose</item>
+    </style>
+</resources>
