@@ -1,9 +1,9 @@
 <resources>
+    <!-- Android 5.0-5.1 (Fire OS 5): no dark status-bar icons, so the bars use rose to keep white icons readable. -->
     <style name="Theme.Home" parent="android:Theme.Material.Light.NoActionBar">
         <item name="android:windowBackground">@color/bg</item>
-        <item name="android:statusBarColor">@color/bg</item>
-        <item name="android:navigationBarColor">@color/bg</item>
-        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:statusBarColor">@color/rose</item>
+        <item name="android:navigationBarColor">@color/rose</item>
         <item name="android:colorAccent">@color/rose</item>
     </style>
     <color name="bg">#F6F2EE</color>

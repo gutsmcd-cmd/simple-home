@@ -1,6 +1,8 @@
 package io.github.gutsmcd.simplehome
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.BroadcastReceiver
 import android.content.ComponentName
 import android.content.Context
@@ -10,6 +12,7 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Editable
@@ -56,9 +59,14 @@ class MainActivity : Activity() {
             addAction(Intent.ACTION_PACKAGE_ADDED); addAction(Intent.ACTION_PACKAGE_REMOVED)
             addAction(Intent.ACTION_PACKAGE_CHANGED); addDataScheme("package")
         })
+        // Android 13+: back gestures go through the dispatcher. Back on a home screen only clears the search.
+        if (Build.VERSION.SDK_INT >= 33) onBackInvokedDispatcher.registerOnBackInvokedCallback(
+            android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT) { if (search.text.isNotEmpty()) search.setText("") }
     }
     override fun onDestroy() { unregisterReceiver(pkgReceiver); super.onDestroy() }
     override fun onNewIntent(i: Intent) { super.onNewIntent(i); search.setText(""); grid.smoothScrollToPosition(0) }
+    // Android 5-12 (including Fire OS 5) still use onBackPressed; Android 13+ is handled in onCreate.
+    @SuppressLint("GestureBackNavigation")
     @Deprecated("Deprecated in Java")
     override fun onBackPressed() { if (search.text.isNotEmpty()) search.setText("") }
 
@@ -96,8 +104,11 @@ class MainActivity : Activity() {
         bar.addView(chip(if (en) "日本語" else "English", false) { prefs.edit().putBoolean("en", !en).apply(); refresh() })
         bar.addView(chip(t("大きい文字", "Large text"), large) { prefs.edit().putBoolean("large", !large).apply(); refresh() })
         bar.addView(chip(t("大きいアイコン", "Big tiles"), big) { prefs.edit().putBoolean("big", !big).apply(); refresh() })
+        // Mat's own app sites, opened in the device's browser (on Fire OS that is Silk).
+        bar.addView(chip(t("無料アプリ", "Free Apps"), false) { openSite("https://gutsmcd-cmd.github.io/free-apps/") })
+        bar.addView(chip(t("ユニバース74", "Universe 74"), false) { openSite("https://gutsmcd-cmd.github.io/universe-74/") })
         bar.addView(View(this), LinearLayout.LayoutParams(0, 1, 1f))
-        bar.addView(chip("⚙", false) { startActivity(Intent(Settings.ACTION_HOME_SETTINGS)) })
+        bar.addView(chip("⚙", false) { openHomeSettings() })
         root.addView(HorizontalScrollView(this).apply { isHorizontalScrollBarEnabled = false; addView(bar) })
 
         search = EditText(this).apply {
@@ -184,6 +195,34 @@ class MainActivity : Activity() {
         } catch (e: Exception) { Toast.makeText(this, t("開けませんでした", "Couldn't open"), Toast.LENGTH_SHORT).show() }
     }
 
+    /** Start a settings screen if this device has it; otherwise say so instead of crashing. */
+    private fun safeStart(i: Intent): Boolean {
+        val ok = try {
+            if (i.resolveActivity(packageManager) == null) false else { startActivity(i); true }
+        } catch (e: Exception) { false }
+        if (!ok) Toast.makeText(this, t("この設定は開けませんでした", "This setting isn't available"), Toast.LENGTH_SHORT).show()
+        return ok
+    }
+
+    private fun openSite(url: String) {
+        safeStart(Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
+
+    /** Phones: open Android's "Default home app" screen. Fire tablets have no such screen, so explain instead. */
+    private fun openHomeSettings() {
+        val homeSettings = Intent(Settings.ACTION_HOME_SETTINGS)
+        val amazon = Build.MANUFACTURER.equals("Amazon", ignoreCase = true)
+        if (!amazon && homeSettings.resolveActivity(packageManager) != null) { safeStart(homeSettings); return }
+        AlertDialog.Builder(this)
+            .setTitle(t("ホームボタンについて", "About the Home button"))
+            .setMessage(t(
+                "この端末ではホームボタンを変更できません。シンプルホームはアプリ一覧から開いてください。",
+                "This device doesn't let you change the Home button. Open Simple Home from your apps instead."))
+            .setPositiveButton(t("設定を開く", "Open Settings")) { _, _ -> safeStart(Intent(Settings.ACTION_SETTINGS)) }
+            .setNegativeButton(t("閉じる", "Close"), null)
+            .show()
+    }
+
     private fun menu(a: App, anchor: View) {
         val key = a.comp.flattenToString(); val d = dockList().toMutableList(); val docked = key in d
         PopupMenu(this, anchor).apply {
@@ -196,7 +235,7 @@ class MainActivity : Activity() {
                         else Toast.makeText(this@MainActivity, t("ドックは5個まで", "Dock holds 5 apps"), Toast.LENGTH_SHORT).show()
                         prefs.edit().putString("dock", d.joinToString("|")).apply(); fill()
                     }
-                    2 -> startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + a.comp.packageName)))
+                    2 -> safeStart(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + a.comp.packageName)))
                 }
                 true
             }

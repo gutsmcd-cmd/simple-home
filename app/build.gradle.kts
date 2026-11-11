@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "io.github.gutsmcd.simplehome"
-        minSdk = 26
+        minSdk = 22
         targetSdk = 37
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
     }
 
     signingConfigs {
@@ -50,7 +50,7 @@ android {
     lint {
         abortOnError = true
         warningsAsErrors = false
-        // aapt2 only accepts <adaptive-icon> from a -v26 folder, even with minSdk 26.
+        // Adaptive icon lives in mipmap-anydpi-v26; older Android uses the PNGs in mipmap-*dpi.
         disable += "ObsoleteSdkInt"
     }
 

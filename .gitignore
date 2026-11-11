@@ -14,3 +14,6 @@ gradle/wrapper/gradle-wrapper.jar
 .idea/
 *.iml
 *.bak
+
+# Legacy launcher icons (Android 5-7) are real source files
+!app/src/main/res/mipmap-*/ic_launcher.png
